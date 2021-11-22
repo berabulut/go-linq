@@ -35,6 +35,7 @@ jobs:
     - name: Install dependencies
       run: |
         go install github.com/bradleyfalzon/apicompat/cmd/apicompat
+        go install golang.org/x/lint/golint
 
     - name: Run vet 
       run: go vet -x ./...
