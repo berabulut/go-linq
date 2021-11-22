@@ -6,8 +6,6 @@ name: Test
 # events but only for the master branch
 on:
   pull_request:
-    branches:
-    - master
   push:
     branches: 
      - master
@@ -36,22 +34,25 @@ jobs:
     # Install all the dependencies
     - name: Install dependencies
       run: |
-        go get -u github.com/bradleyfalzon/apicompat/cmd/apicompat
+        go install github.com/bradleyfalzon/apicompat/cmd/apicompat
 
-    # Run vet & lint on the code
-    - name: Run vet & lint
-      run: |
-        go vet -x ./...
-        test -z "$(golint ./...)"
-        test -z "$(gofmt -s -l -w . | tee /dev/stderr)"
+    - name: Run vet 
+      run: go vet -x ./...
+        
     
-    # Run tests
+    - name: Lint
+      run: test -z "$(golint ./...)" -e
+
+    - name: Format code
+      run: test -z "$(gofmt -s -l -w . | tee /dev/stderr)" -e
+    
     - name: Run tests
       run: |
         go test -v  ./...
         go test -covermode=count -coverprofile=profile.cov
-        test -z "$(gofmt -s -l -w . | tee /dev/stderr)"
-        test -z "$(apicompat -before ${{ github.event.before }} -after ${{ github.event.after}} ./... | tee /dev/stderr)"
+
+    - name: Backward compability
+      run: test -z "$(apicompat -before ${{ github.event.before }} -after ${{ github.event.after}} ./... | tee /dev/stderr)" -e
       
     - name: Send coverage
       uses: shogo82148/actions-goveralls@v1
