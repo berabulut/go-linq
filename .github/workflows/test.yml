@@ -49,10 +49,10 @@ jobs:
 
     
     - name: Lint
-      run: test -z "$(golint ./...)" 
+      run: test -z "$(golint ./...)" -e
 
     - name: Format code
-      run: test -z "$(gofmt -s -l -w . | tee /dev/stderr)" 
+      run: test -z "$(gofmt -s -l -w . | tee /dev/stderr)" -e
     
     - name: Run tests
       run: |
