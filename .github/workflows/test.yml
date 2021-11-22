@@ -19,6 +19,9 @@ jobs:
   test:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [1.11.x, tip]
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -26,11 +29,33 @@ jobs:
     - uses: actions/checkout@v2
     
     # Setup Go
-    - name: Setup Go
+    - name: Install Go
+      if: matrix.go != 'tip'
       uses: actions/setup-go@v2
       with:
-        go-version: '1.11' # The Go version to download (if necessary) and use.
-   
+        go-version: ${{ matrix.go }}
+
+    - name: Install Go
+      if: matrix.go == 'tip'
+      run: |
+        export GOROOT_BOOTSTRAP=`go env GOROOT`
+        export GOROOT_FINAL=/go
+        export GOROOT=$HOME/gotip
+        mkdir $HOME/gotip
+        cd $HOME/gotip
+
+        curl -s 'https://go.googlesource.com/go/+/refs/heads/master?format=JSON' | awk '/"commit"/{print substr($2,2,40);exit}' >HEAD
+        awk '{printf("gotip-%s",substr($0,0,7))}' <HEAD >VERSION
+
+        curl -s -o go.tar.gz https://go.googlesource.com/go/+archive/`cat HEAD`.tar.gz
+        tar xfz go.tar.gz
+
+        cd src
+        bash make.bash
+
+        echo "::set-env name=GOROOT::$GOROOT"
+        echo "::add-path::$GOROOT/bin"
+    
     - name: Test
       run: |
         go version
